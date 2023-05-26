@@ -17,7 +17,7 @@ jobs:
           draft: false
           prerelease: false
           name: ${{ steps.version.outputs.version }}
-          tag: "Packages"
+          tag: Packages
           allowUpdates: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
