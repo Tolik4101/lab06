@@ -17,7 +17,6 @@ jobs:
           prerelease: false
           name: ${{ steps.version.outputs.version }}
           tag: ${{ github.ref }}
-          body_path: ChangeLog.md
           allowUpdates: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
