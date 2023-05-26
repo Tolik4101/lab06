@@ -3,7 +3,8 @@ on: [ push ]
 jobs:
   artifacts:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
     steps:
       - name: version
 #         run: echo "::set-output name=version::$(./bin/azblogfilter --version)"
