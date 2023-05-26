@@ -1,0 +1,136 @@
+name: building_tests
+on: [ push ]
+jobs:
+  building_gtests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+
+      - name: build
+        shell: bash
+        run: |
+          git submodule update --init --recursive
+          cmake -B build
+          cd build
+          make
+  testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: chekout
+        uses: actions/checkout@v2
+
+      - name: tests
+        shell: bash
+        run: |
+          git submodule update --init --recursive
+          cmake -B build
+          cd build
+          make
+          ./tests
+          
+      - name: install lcov
+        run: |
+          sudo apt-get install -y lcov
+      - name: run lcov
+        run: | 
+          lcov --capture --directory build/CMakeFiles/banking.dir/banking --output-file lcov.info
+          lcov --remove lcov.info '/usr/include/*' -o lcov.info
+          lcov --remove lcov.info '/home/runner/work/lab05/lab05/third-party/gtest/*' -o lcov.info
+      - name: coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          path-to-lcov: "./lcov.info"
+          github-token: ${{ secrets.github_token }}
+
+  artifacts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: version
+#         run: echo "::set-output name=version::$(./bin/azblogfilter --version)"
+        run: echo "v0.1.0.0"
+        id: version
+      - name: Create Release
+        uses: ncipollo/release-action@v1.10.0
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          name: ${{ steps.version.outputs.version }}
+          tag: ${{ github.ref }}
+          body_path: ChangeLog.md
+          allowUpdates: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: checkout
+        uses: actions/checkout@v1
+
+      - name: update submodules
+        shell: bash
+        run: |
+          git submodule update --init --recursive
+
+      - name: building_artifacts
+        shell: bash
+        run: |
+          sudo apt-get install -y cmake
+          sudo apt-get install -y rpm
+          cmake -H. -B_build
+          cmake --build _build --target package
+      
+      - name: upload deb artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./_build/banking-0.1.0.0-Linux.deb
+          asset_name: banking.deb
+          asset_content_type: application/apt
+      
+      - name: upload tar artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./_build/banking-0.1.0.0-Linux.tar.gz
+          asset_name: azblogfilter.linux-amd64.tar.gz
+          asset_content_type: application/gzip
+      
+      
+      - name: upload linux sh artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./_build/banking-0.1.0.0-Linux.sh
+          asset_name: banking.sh
+          asset_content_type: application/shell
+      
+      
+      - name: upload rpm artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./_build/banking-0.1.0.0-Linux.rpm
+          asset_name: banking.rpm
+          asset_content_type: application/rpm
+          
+      - name: upload tarZ artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./_build/banking-0.1.0.0-Linux.tar.Z
+          asset_name: banking.tar.Z
+          asset_content_type: application/gzip
+    
