@@ -11,7 +11,7 @@
     draft: false
     prerelease: false
     name: ${{ steps.version.outputs.version }}
-    tag: ${{ github.ref }}
+    tag: "Packages" # Под каким тэгом выгружать
     body_path: ChangeLog.md
     allowUpdates: true
   env:
